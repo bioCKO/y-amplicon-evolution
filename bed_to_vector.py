@@ -1,3 +1,10 @@
+#!/usr/bin/python
+
+'''
+Reads a bedGraph file of sequencing depth and returns 
+a linear array of depth at each base in a chromosome.
+'''
+
 def bed_to_depthvec(bedfile, chrom, regfile=None):
 	depthvec = []
 	last = -1
