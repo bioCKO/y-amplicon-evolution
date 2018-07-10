@@ -1,15 +1,24 @@
 #!/usr/bin/python
 
+'''
+Takes bedGraph file of Y-chromosome mapability created by make_rep_graph.py and 
+creates a python pickle file of the set of bases that map as many times as expected in 
+the amplicons and control regions used in Teitz et al. 2018.
+'''
+
 import pickle
 import sys
 import os
 from make_chrY_vector import bed_to_depthvec
 
-if os.path.isfile(sys.argv[2]):
+source_bed = sys.argv[1] #bedgraph from make_rep_graph.py
+outfile = sys.argv[2] #name of output pickle file
+
+if os.path.isfile(outfile):
 	print 'Outfile already exists!'
 	quit()
 
-rfile = open('/lab/Page_lab-users/lsteitz/Y_repeats.txt', 'r')
+rfile = open('./Y_repeats.txt', 'r')
 
 y_reps = {}
 for line in rfile:
@@ -21,19 +30,6 @@ for line in rfile:
 	y_reps[data[5]].append(data)
 
 rfile.close()
-
-source_bed = sys.argv[1] #'chrY_to_all_100bp_cut14.bedgraph'
-
-'''
-			   'chrY_to_all_100bp_cut11.bedgraph', 
-			   'chrY_to_all_100bp_cut0.bedgraph', 
-			   'chrY_to_all_50bp_cut14.bedgraph', 
-			   'chrY_to_all_50bp_cut11.bedgraph', 
-			   'chrY_to_all_50bp_cut0.bedgraph', 
-			   'chrY_to_all_35bp_cut14.bedgraph', 
-			   'chrY_to_all_35bp_cut11.bedgraph', 
-			   'chrY_to_all_35bp_cut0.bedgraph'
-'''
 
 
 y_rep_pcts = {x:[] for x in y_reps}
@@ -62,7 +58,7 @@ for control in controls:
 			goodbase_set.add(base)
 
 
-outfile = open(sys.argv[2], 'w')
+outfile = open(outfile, 'w')
 pickle.dump(goodbase_set, outfile)
 outfile.close()
 

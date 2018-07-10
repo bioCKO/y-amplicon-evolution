@@ -1,35 +1,45 @@
 #!/usr/bin/python
 
+'''
+Simulation of genetic drift over a range of population sizes and mutation rates 
+used to simulate haplogroup A00 amplicon mutation
+'''
+
+import sys
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-percent_mut = []
+outname = sys.argv[1]
+outfile = open(outname, 'w')
+outfile.write('m\tN\t% Mutant\n')
+#Range of mutation rates
+m_range = [10**-x for x in xrange(1,7)] + [2. * 10**-x for x in xrange(1,7)] + [4. * 10**-x for x in xrange(1,7)] + [8. * 10**-x for x in xrange(1,7)] + [0]
+m_range.sort()
 
-for rep in xrange(1000):
-	p = 0
-	q = 1
-	m = .00043
-	r = .0001
-	N = 10000
-	gens = 10000
 
-	results = []
+for N in [100, 1000, 5000, 10000, 50000, 100000, 1000000]: #Range of population sizes
+	for m in m_range:
+		percent_mut = []
+		for rep in xrange(100):
+			p = 0 #starting fraction with mutations
+			q = 1 #starting fraction without mutations
+			#r = .0001 #term for reversion; not used in published results
+			gens = 10000 #Also simulated 8000 generations; results were similar
 
-	for generation in xrange(gens):
-		p = np.random.binomial(N, p + m*q)/float(N)
-		#p = np.random.binomial(N, (1-r)*p + m*q)/float(N) #With Reversion
-		q = 1-p
-		results.append(p)
 
-	plt.plot(results)
-	percent_mut.append(p)
-plt.savefig('/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/drift/m%s_N%i_%igens_rev.png' %(str(m)[1:], N, gens))
+			for generation in xrange(gens):
+				p = np.random.binomial(N, p + m*q)/float(N)
+				#p = np.random.binomial(N, (1-r)*p + m*q)/float(N) #Model with reversion; not used in published results
+				if p == 1:
+					break
+				
+				q = 1-p
 
-plt.clf()
-plt.hist(percent_mut)
-plt.title('Mean = %f' %(np.mean(percent_mut)))
-plt.savefig('/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/drift/m%s_N%i_%igens_hist_rev.png' %(str(m)[2:], N, gens))
+			percent_mut.append(p)
+		outfile.write('%f\t%i\t%f\n' %(m, N, np.mean(percent_mut)))
+		print '%f\t%i\t%f' %(m, N, np.mean(percent_mut))
+outfile.close()
 
 

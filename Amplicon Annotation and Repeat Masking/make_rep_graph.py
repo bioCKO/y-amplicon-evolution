@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
+'''
+Takes sam file created by find_unique_regions.py and makes a bedGraph file of 
+regions of the Y chromosome and how many times they map in the human genome.
+'''
+
 import sys
-#import matplotlib.pyplot as plt
 
 insam = open(sys.argv[1], 'r')
 outfile = sys.argv[2]
@@ -25,14 +29,6 @@ insam.close()
 repvec = repvec[1:]
 repvec.append(readcount)
 
-'''
-figs = 57
-for fig in xrange(1,figs+1):
-	plt.clf()
-	plt.figure(figsize=(200,4))
-	plt.plot(repvec[len(repvec)/figs*fig:len(repvec)/figs*(fig+1)])
-	plt.savefig(outfile + '_%i.png' %(fig))
-'''
 
 outname = open('%s.bedgraph' %(outfile), 'w')	
 startrep = 0

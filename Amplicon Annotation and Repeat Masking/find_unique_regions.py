@@ -1,19 +1,15 @@
 #!/usr/bin/python
 
 '''
-Takes FASTA file of a genome or chromosome as input and finds the uniquely mappable regions.
+Takes FASTA file of a genome or chromosome as input and finds how many times each region 
+maps to the whole genome.
 
 This script works by generating all possible reads of a given size from a reference genome 
 or chromosome by moving a window of that size one base at a time over each chromosome.
 Those reads are then mapped to the entire reference genome using bowtie2.
-Finally, any reads which either don't map anywhere (because of the presence of Ns in the reads) 
-or that map to more than one place with an chosen alignment score or higher are detected, 
-and the program returns a mapability file in the bed format.
 
 NOTE: This script takes a very long time to run.
 '''
-
-#TO DO: Add option for alternatives to using Bowtie2
 
 from Bio import SeqIO
 import subprocess
@@ -65,23 +61,25 @@ for chromosome in ref_genome:
 	print subprocess.check_output('bowtie2 -f -k 2 --score-min C,%i -x %s -U %s -S %s' %(args.min_score, args.reference_index, read_out, sam_out), shell = True),
 	print subprocess.check_output('rm -f %s' %(read_out), shell = True),
 	
-	#Step 3: Detect uniquely mappable regions of the genome from the alignment
+	#The following code creates a bedGraph file of only the bases that map exactly once in the genome. 
+	#The current pipeline does not use this file, so the code is commented out.
+	##Step 3: Detect uniquely mappable regions of the genome from the alignment
+	#
+	# print 'Finding uniquely mappable regions for %s...' %(chromosome.id)
+	# with open(sam_out, 'r') as samfile:
+	# 	start = 1 #The starting base for the current uniquely mappable region
+	# 	for read in samfile:
+	# 		#Skip header lines of SAM file
+	# 		if read.startswith('@'):
+	# 			continue
+	# 		samread = read.split()
+	# 		window_position = int(samread[0].split('r')[-1])
+	# 		#Check if read is unmapped or mapped to more than one location using the binary SAM flag; if it is, end the current uniquely mappable region and write it to the mapability file
+	# 		if int(samread[1]) & 260 != 0:
+	# 			if window_position != start: #Check if the previous base was also unmappable; if so, the mappable region ended by this unmappable read has length 0, so skip it
+	# 				mapfile.write('%s\t%i\t%i\n' %(chromosome.id, start - 1, window_position - 1))
+	# 			start = window_position + 1 #Set the start of a new mappable region to the next base
+	# 	if window_position != start - 1: #After going over the entire chromosome, check if the final bases were uniquely mappable, and if so write them to the mapability file
+	# 		mapfile.write('%s\t%i\t%i\n' %(chromosome.id, start - 1, window_position))
 	
-	print 'Finding uniquely mappable regions for %s...' %(chromosome.id)
-	with open(sam_out, 'r') as samfile:
-		start = 1 #The starting base for the current uniquely mappable region
-		for read in samfile:
-			#Skip header lines of SAM file
-			if read.startswith('@'):
-				continue
-			samread = read.split()
-			window_position = int(samread[0].split('r')[-1])
-			#Check if read is unmapped or mapped to more than one location using the binary SAM flag; if it is, end the current uniquely mappable region and write it to the mapability file
-			if int(samread[1]) & 260 != 0:
-				if window_position != start: #Check if the previous base was also unmappable; if so, the mappable region ended by this unmappable read has length 0, so skip it
-					mapfile.write('%s\t%i\t%i\n' %(chromosome.id, start - 1, window_position - 1))
-				start = window_position + 1 #Set the start of a new mappable region to the next base
-		if window_position != start - 1: #After going over the entire chromosome, check if the final bases were uniquely mappable, and if so write them to the mapability file
-			mapfile.write('%s\t%i\t%i\n' %(chromosome.id, start - 1, window_position))
-	print subprocess.check_output('rm -f %s' %(sam_out), shell = True),
 mapfile.close()

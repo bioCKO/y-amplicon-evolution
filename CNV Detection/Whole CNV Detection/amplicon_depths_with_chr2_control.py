@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+'''
+Takes a default Y chromosome amplicon depth file normalized by single-copy Y sequence 
+and outputs a amplicon depth file normalized by the depth of chr2 
+(used to verify Y-specificity of amplicons with data from XX and XY individuals)
+'''
+
 import sys
 from bed_to_vector import bed_to_depthvec
 from make_chrY_vector import get_reg_depth
@@ -7,15 +13,14 @@ import glob
 import os
 import numpy as np
 
-chrY_vector = sys.argv[1]
-chr2_bedgraph = sys.argv[2]
-outname = sys.argv[3]
+chrY_vector = sys.argv[1] #filename of Y chromosome amplicon depth file
+chr2_bedgraph = sys.argv[2] #bedGraph of chr2 depth from the same individual
+outname = sys.argv[3] #output filename
 if os.path.isfile(outname):
 	print 'Error: Output file already exists'
 	quit()
 
 control_regs = [[80000000, 85000000]]
-#control_regs = [[30000000, 40000000], [80000000, 85000000], [150000000, 152500000], [200000000, 201000000]]
 
 chr2_depthvec = bed_to_depthvec(chr2_bedgraph, 'chr2')
 print len(chr2_depthvec)

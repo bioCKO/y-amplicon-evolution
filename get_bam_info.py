@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+'''
+Calculates read length, mean fragment size, and 
+fragment size standard deviation of a BAM file.
+'''
+
 from Bio import SeqIO
 import pysam
 import numpy
