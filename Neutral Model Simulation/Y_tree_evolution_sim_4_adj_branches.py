@@ -62,10 +62,37 @@ def evolve_tree(newick, dup_mut=0.00043, del_mut=0.0, dup_rev=0.00086, del_rev=0
 		###
 		#Shortcut simulation; more accurate times since generations aren't rounded down
 		#Right now, does NOT WORK for multi-parameter model
-		rand_draw = random.random()
-		if rand_draw >= (1 - dup_mut) ** (node.dist * gen_per_snp):
-			node.cnv_state = 'deletion'
+		#rand_draw = random.random()
+		#if rand_draw >= (1 - dup_mut) ** (max(0.5, node.dist) * gen_per_snp): #NEW: LEN 0 NODES ARE TREATED AS LEN 0.5!
+		#	node.cnv_state = 'deletion'
 		###
+		
+		###
+		#Generational mutation including fractional generations
+		#Works for multi-parameter model
+		gens = int(node.dist * gen_per_snp)
+		frac_gen = node.dist * gen_per_snp - gens #The fractional remainder of a generation
+		
+		for gen in xrange(gens):
+			rand_draw = random.random()
+			if node.cnv_state == 'reference':
+				if rand_draw < dup_mut:
+					node.cnv_state = 'mutation'
+
+			else:
+				if rand_draw < dup_rev:
+					node.cnv_state = 'reference'
+		
+		rand_draw = random.random()
+		if node.cnv_state == 'reference':
+			if rand_draw >= (1 - dup_mut) ** frac_gen:
+				node.cnv_state = 'mutation'
+		else:
+			if rand_draw >= (1 - dup_rev) ** frac_gen:
+				node.cnv_state = 'reference'
+		
+		
+		
 		'''
 		if node.cnv_state != orig_state:
 			node.set_style(mutstyle)
@@ -161,7 +188,7 @@ if __name__ == '__main__':
 	import numpy as np
 	
 	parser = argparse.ArgumentParser(description = "Simulates amplicon CNV evolution of a tree")
-	parser.add_argument("-t", "--tree", default = "/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/Phylogenetic_Trees/tree.all.branch.lengths.nwk", help = "Newick file of tree")
+	parser.add_argument("-t", "--tree", default = "/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/Tree_branch_adjustment/adjusted_tree_all_branches.nwk", help = "Newick file of tree")
 	parser.add_argument("-u", "--dup_mut", help = "Duplication mutation rate (events per generation)", type = float, default = .00043)
 	parser.add_argument("-e", "--del_mut", help = "Deletion mutation rate (events per generation)", type = float, default = .000)
 	parser.add_argument("-r", "--dup_rev", help = "Duplication reversion rate (events per generation)", type = float, default = .00086)
@@ -188,10 +215,12 @@ if __name__ == '__main__':
 
 
 	
-	out_dir = '/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/Phylogenetic_Trees/Simulations/final_sim_stats_no_gen_estimate/'
-	outfile = open('%sdu%s_de%s_dur%s_10000_sims.txt' %(out_dir,
+	#out_dir = '/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/Phylogenetic_Trees/Simulations/final_sim_stats_no_gen_estimate/'
+	#out_dir = '/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/Y_tree_pval/Adjusted_branch_lengths/two_param_sim_stats/'
+	out_dir = '/lab/Page_lab-users/lsteitz/1000_Genomes_Male_Figures/Y_tree_pval/Adjusted_branch_lengths/one_param_sim_stats/'
+	
+	outfile = open('%sdu%s_dur%s_10000_sims.txt' %(out_dir,
 											 str(args.dup_mut).split('.')[-1],
-											 str(args.del_mut).split('.')[-1],
 											 str(args.dup_rev).split('.')[-1]), 'w')
 	
 	for thing in xrange(args.iters):

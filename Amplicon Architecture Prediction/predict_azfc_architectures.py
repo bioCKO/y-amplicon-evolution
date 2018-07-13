@@ -400,14 +400,3 @@ if __name__ == '__main__':
 	
 	plot_multiple_azfc(present_states_structures, '%sDetected Architectures.svg' %(args.output_directory))
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
