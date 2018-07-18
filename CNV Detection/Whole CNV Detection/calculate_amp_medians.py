@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 '''
-Take bedgraph coverage file and return vector of depths of chrY multimapping regions
+Takes bedgraph coverage file(s) and returns a file of median normalized depths of chrY amplicons and control regions
 '''
 
-import pickle
-import sys
-import numpy as np
 import os
+import argparse
+import pickle
+import numpy as np
 
 def bed_to_depthvec(bedfile, chrom, regfile=None):
 	depthvec = []
@@ -73,18 +73,33 @@ def get_multi_rep_wins(depthvec, rep_dict, *repregs, **kwargs):
 
 
 if __name__ == '__main__':
-	infiles = sys.argv[1:-1]
-	outname = sys.argv[-1]
-	if os.path.isfile(outname):
+
+
+	dirname = '/'.join(os.path.realpath(__file__).split('/')[:-3])
+
+	parser = argparse.ArgumentParser(description = "Takes bedgraph coverage file(s) and returns a file of median normalized depths of chrY amplicons and control regions")
+	
+	parser.add_argument("input_files", nargs = '*', help = "bedGraph file(s) of Y chromosome depth")
+	parser.add_argument("-o", "--outfile", default = "./amplicon_medians", help = "Output filename")
+	parser.add_argument("-g", "--good_locations", 
+						default = "%s/Amplicon Annotation and Repeat Masking/good_chrY_amplicon_bases_w100_c11.pickle" %(dirname), 
+						help = "File of unmasked Y chromosome locations (provided in Amplicon Annotation and Repeat Masking")
+	parser.add_argument("-r", "--repeats_file", 
+						default = "%s/Amplicon Annotation and Repeat Masking/Y_repeats.txt" %(dirname), 
+						help = "File of Y chromosome amplicon locations (provided in Amplicon Annotation and Repeat Masking")
+	
+	args = parser.parse_args()
+
+
+	if os.path.isfile(args.outfile):
 		print 'ERROR: Output file already exists.'
 		quit()
-	#goodlocsfile = open('/lab/solexa_page/lsteitz/chrY_repeatmasker_set.pickle', 'r')
-	goodlocsfile = open('/lab/solexa_page/lsteitz/Y_repetition/good_chrY_amplicon_bases_w100_c11.pickle', 'r')
+	goodlocsfile = open(args.good_locations, 'r')
 	goodlocs = pickle.load(goodlocsfile)
 	goodlocsfile.close()
 	
 	chrY_depth = []
-	for infile in infiles:
+	for infile in args.input_files:
 		chrY_depth.append(bed_to_depthvec(infile, 'chrY'))
 	
 	if len(chrY_depth) == 1:
@@ -102,7 +117,7 @@ if __name__ == '__main__':
 	
 	#Get median coverages at multimapping regions
 
-	rfile = open('/lab/Page_lab-users/lsteitz/Y_repeats.txt', 'r')
+	rfile = open(args.repeats_file, 'r')
 
 	y_reps = {}
 	for line in rfile:
@@ -163,8 +178,8 @@ if __name__ == '__main__':
 	
 	normed_meds = [x/norm_med for x in medians]
 
-	outfile = open(outname, 'w')
-	outfile.write('#Source file: %s\tSingle-copy median depth: %f\n' %(', '.join(infiles), norm_med))
+	outfile = open(args.outfile, 'w')
+	outfile.write('#Source file: %s\tSingle-copy median depth: %f\n' %(', '.join(args.input_files), norm_med))
 	outfile.write('#%s\n' %('\t'.join(regnames)))
 	outfile.write('%s\n' %('\t'.join([str(x) for x in normed_meds])))
 	outfile.close()
